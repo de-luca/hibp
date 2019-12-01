@@ -1,14 +1,13 @@
-extern crate reqwest;
-extern crate regex;
-extern crate sha1;
 #[cfg(test)]
 extern crate mockito;
+extern crate regex;
+extern crate reqwest;
+extern crate sha1;
 
 use regex::Regex;
-use sha1::{Sha1, Digest};
+use sha1::{Digest, Sha1};
 use std::error;
 use std::fmt;
-
 
 #[derive(Debug)]
 pub struct PwnedError {
@@ -17,7 +16,7 @@ pub struct PwnedError {
 
 impl PwnedError {
     fn new(uses: i32) -> PwnedError {
-        PwnedError{ uses }
+        PwnedError { uses }
     }
 }
 
@@ -36,7 +35,6 @@ impl fmt::Display for PwnedError {
         write!(f, "Password has been Pwned {} times", self.uses)
     }
 }
-
 
 #[derive(Debug)]
 pub enum Error {
@@ -101,10 +99,9 @@ impl From<regex::Error> for Error {
     }
 }
 
-
 pub fn check(password: String) -> Result<(), Error> {
     let hash = hash(password);
-    
+
     #[cfg(not(test))]
     let url = format!("https://api.pwnedpasswords.com/range/{}", hash.0);
     #[cfg(test)]
@@ -117,19 +114,16 @@ pub fn check(password: String) -> Result<(), Error> {
         Some(c) => {
             let uses: i32 = c.get(1).map_or("", |m| m.as_str()).parse()?;
             Err(Error::Pwned(<PwnedError>::new(uses)))
-        },
-        None => Ok(())
+        }
+        None => Ok(()),
     }
 }
 
 fn hash(password: String) -> (String, String) {
-    let hash = Sha1::new()
-        .chain(password)
-        .result();
+    let hash = Sha1::new().chain(password).result();
     let hex = format!("{:X}", hash);
     (hex[0..5].to_string(), hex.clone()[5..].to_string())
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -138,7 +132,7 @@ mod tests {
         use super::hash;
 
         let hashed = hash("test".to_string());
-        
+
         assert_eq!(hashed.0.chars().count(), 5);
         assert_eq!(hashed.1.chars().count(), 35);
     }
@@ -148,17 +142,19 @@ mod tests {
         use super::check;
         use mockito::mock;
 
-        // A94A8 is 0..5 of 'test' SHA1 
+        // A94A8 is 0..5 of 'test' SHA1
         // FE5CCB19BA61C4C0873D391E987982FBBD3 is 5.. of 'test' SHA1
 
         let _m = mock("GET", "/range/A94A8")
             .with_status(200)
-            .with_body("
+            .with_body(
+                "
 FD8D510BFF2210462F26307C2143E990E6E:2
 FDFAEE848356AD27F8FB494E5C1B11956C2:2
 FF36DC7D3284A39991ADA90CAF20D1E3C0D:1
 FFF983A91443AE72BD98E59ADAB93B31974:2
-")
+",
+            )
             .create();
 
         let checked = check("test".to_string());
@@ -171,18 +167,20 @@ FFF983A91443AE72BD98E59ADAB93B31974:2
         use super::Error;
         use mockito::mock;
 
-        // A94A8 is 0..5 of 'test' SHA1 
+        // A94A8 is 0..5 of 'test' SHA1
         // FE5CCB19BA61C4C0873D391E987982FBBD3 is 5.. of 'test' SHA1
 
         let _m = mock("GET", "/range/A94A8")
             .with_status(200)
-            .with_body("
+            .with_body(
+                "
 FD8D510BFF2210462F26307C2143E990E6E:2
 FDFAEE848356AD27F8FB494E5C1B11956C2:2
 FE5CCB19BA61C4C0873D391E987982FBBD3:42
 FF36DC7D3284A39991ADA90CAF20D1E3C0D:1
 FFF983A91443AE72BD98E59ADAB93B31974:2
-")
+",
+            )
             .create();
 
         let err: Error = check("test".to_string()).unwrap_err();
