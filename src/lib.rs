@@ -136,9 +136,8 @@ mod tests {
     #[test]
     fn it_hashes() {
         use super::hash;
-        let hashed = hash("test".to_string());
 
-        dbg!(&hashed);
+        let hashed = hash("test".to_string());
         
         assert_eq!(hashed.0.chars().count(), 5);
         assert_eq!(hashed.1.chars().count(), 35);
@@ -170,7 +169,6 @@ FFF983A91443AE72BD98E59ADAB93B31974:2
     fn it_checks_with_err() {
         use super::check;
         use super::Error;
-        use super::PwnedError;
         use mockito::mock;
 
         // A94A8 is 0..5 of 'test' SHA1 
