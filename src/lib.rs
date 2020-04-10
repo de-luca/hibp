@@ -21,10 +21,6 @@ impl PwnedError {
 }
 
 impl error::Error for PwnedError {
-    fn description(&self) -> &str {
-        "Password has been Pwned"
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         None
     }
@@ -56,15 +52,6 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Pwned(ref err) => err.description(),
-            Error::Parse(ref err) => err.description(),
-            Error::Reqwest(ref err) => err.description(),
-            Error::Regex(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Pwned(ref err) => Some(err),
@@ -99,7 +86,7 @@ impl From<regex::Error> for Error {
     }
 }
 
-pub fn check(password: String) -> Result<(), Error> {
+pub async fn check(password: String) -> Result<(), Error> {
     let hash = hash(password);
 
     #[cfg(not(test))]
@@ -107,7 +94,7 @@ pub fn check(password: String) -> Result<(), Error> {
     #[cfg(test)]
     let url = format!("{}/range/{}", mockito::server_url(), hash.0);
 
-    let response = reqwest::get(&url)?.text()?;
+    let response = reqwest::get(&url).await?.text().await?;
     let reg = Regex::new(&format!(r"{}:(\d+)", hash.1))?;
 
     match reg.captures(&response) {
@@ -137,8 +124,8 @@ mod tests {
         assert_eq!(hashed.1.chars().count(), 35);
     }
 
-    #[test]
-    fn it_checks_with_ok() {
+    #[tokio::test]
+    async fn it_checks_with_ok() {
         use super::check;
         use mockito::mock;
 
@@ -157,12 +144,12 @@ FFF983A91443AE72BD98E59ADAB93B31974:2
             )
             .create();
 
-        let checked = check("test".to_string());
+        let checked = check("test".to_string()).await;
         assert!(checked.is_ok());
     }
 
-    #[test]
-    fn it_checks_with_err() {
+    #[tokio::test]
+    async fn it_checks_with_err() {
         use super::check;
         use super::Error;
         use mockito::mock;
@@ -183,7 +170,7 @@ FFF983A91443AE72BD98E59ADAB93B31974:2
             )
             .create();
 
-        let err: Error = check("test".to_string()).unwrap_err();
+        let err: Error = check("test".to_string()).await.unwrap_err();
 
         match err {
             Error::Pwned(ref err) => assert_eq!(err.uses, 42),
