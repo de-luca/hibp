@@ -1,3 +1,8 @@
+//! This crate provides high level access to HaveIBeenPwned password check.
+//! 
+//! It makes requests against the [Password](https://haveibeenpwned.com/Passwords) service of HaveIBeenPwned
+//! and uses its [API](https://haveibeenpwned.com/API/v3#PwnedPasswords) 
+
 #[cfg(test)]
 extern crate mockito;
 extern crate regex;
@@ -9,8 +14,10 @@ use sha1::{Digest, Sha1};
 use std::error;
 use std::fmt;
 
+/// A pwnage error
 #[derive(Debug)]
 pub struct PwnedError {
+    /// The number of time the password is present in HaveIBeenPwned database
     pub uses: i32,
 }
 
@@ -32,6 +39,7 @@ impl fmt::Display for PwnedError {
     }
 }
 
+/// The Errors that may occur when checking a password.
 #[derive(Debug)]
 pub enum Error {
     Pwned(PwnedError),
@@ -86,6 +94,27 @@ impl From<regex::Error> for Error {
     }
 }
 
+/// Checks if a password have been pwned.
+/// 
+/// Returns a Ok if the password is not known and an Error otherwise.  
+/// The error will contain the number of time the password is present
+/// in the HaveIBeenPwned database
+///
+/// # Arguments
+///
+/// * `password` - The password to check
+///
+/// # Example
+///
+/// ```
+/// use hibp::check;
+/// 
+/// #[tokio::main]
+/// async fn main() {
+///     let checked = check("test".to_string()).await;
+///     assert!(checked.is_err());
+/// }
+/// ```
 pub async fn check(password: String) -> Result<(), Error> {
     let hash = hash(password);
 
