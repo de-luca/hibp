@@ -1,13 +1,13 @@
 [package]
 name = "hibp"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Bastien de Luca <bastien@de-luca.io>"]
 edition = "2018"
 license = "MIT"
 readme = "README.md"
 description = "Check password for pwnage in HaveIBeenPwned"
-homepage = "https://github.com/de-luca/rust-hibp"
-repository = "https://github.com/de-luca/rust-hibp"
+homepage = "https://github.com/de-luca/hibp"
+repository = "https://github.com/de-luca/hibp"
 keywords = ["password", "web", "hibp", "haveibeenpwned"]
 
 [dependencies]
